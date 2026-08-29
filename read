@@ -1,0 +1,246 @@
+import sys
+
+from scapy.all import (
+    rdpcap,
+    ICMP,
+    Raw
+)
+
+
+# Colores de terminal
+VERDE = "\033[92m"
+RESET = "\033[0m"
+
+
+# -------------------------------------------------
+# COMPROBAR PARÁMETROS
+# -------------------------------------------------
+
+if len(sys.argv) != 2:
+
+    print("Uso:")
+    print(
+        "py readv2.py stealth_demo.pcap"
+    )
+
+    sys.exit(1)
+
+
+archivo = sys.argv[1]
+
+
+# -------------------------------------------------
+# FUNCIÓN PARA DESCIFRAR CÉSAR
+# -------------------------------------------------
+
+def descifrar_cesar(
+    texto,
+    corrimiento
+):
+
+    resultado = ""
+
+    for caracter in texto:
+
+        if 'a' <= caracter <= 'z':
+
+            posicion = (
+                ord(caracter)
+                - ord('a')
+                - corrimiento
+            ) % 26
+
+            resultado += chr(
+                ord('a') + posicion
+            )
+
+        elif 'A' <= caracter <= 'Z':
+
+            posicion = (
+                ord(caracter)
+                - ord('A')
+                - corrimiento
+            ) % 26
+
+            resultado += chr(
+                ord('A') + posicion
+            )
+
+        else:
+
+            resultado += caracter
+
+    return resultado
+
+
+# -------------------------------------------------
+# LEER ARCHIVO PCAP
+# -------------------------------------------------
+
+try:
+
+    paquetes = rdpcap(
+        archivo
+    )
+
+except FileNotFoundError:
+
+    print(
+        f"No se encontró: {archivo}"
+    )
+
+    sys.exit(1)
+
+
+caracteres = []
+
+
+# -------------------------------------------------
+# RECUPERAR PRIMER BYTE DE CADA PAQUETE
+# -------------------------------------------------
+
+for paquete in paquetes:
+
+    if (
+        paquete.haslayer(ICMP)
+        and paquete[ICMP].type == 8
+        and paquete.haslayer(Raw)
+    ):
+
+        datos = bytes(
+            paquete[Raw].load
+        )
+
+        if len(datos) > 0:
+
+            caracteres.append(
+                chr(datos[0])
+            )
+
+
+mensaje_recibido = "".join(
+    caracteres
+)
+
+
+# -------------------------------------------------
+# ELIMINAR LA "b" FINAL DE CONTROL
+# -------------------------------------------------
+
+if mensaje_recibido.endswith("b"):
+
+    mensaje_cifrado = (
+        mensaje_recibido[:-1]
+    )
+
+else:
+
+    mensaje_cifrado = (
+        mensaje_recibido
+    )
+
+
+print("\n======================================")
+print(" MENSAJE RECUPERADO DESDE ICMP")
+print("======================================")
+
+print("\nMensaje recibido:")
+print(mensaje_recibido)
+
+print("\nMensaje cifrado:")
+print(mensaje_cifrado)
+
+
+# -------------------------------------------------
+# PALABRAS ESPERABLES EN ESPAÑOL
+# -------------------------------------------------
+
+palabras_probables = [
+    " de ",
+    " la ",
+    " el ",
+    " en ",
+    " y ",
+    " que ",
+    "seguridad",
+    "redes",
+    "criptografia"
+]
+
+
+resultados = []
+
+
+# -------------------------------------------------
+# PROBAR LOS 26 CORRIMIENTOS
+# -------------------------------------------------
+
+for corrimiento in range(26):
+
+    candidato = descifrar_cesar(
+        mensaje_cifrado,
+        corrimiento
+    )
+
+    puntaje = 0
+
+    candidato_minuscula = (
+        candidato.lower()
+    )
+
+
+    for palabra in palabras_probables:
+
+        if palabra in candidato_minuscula:
+
+            puntaje += 1
+
+
+    resultados.append(
+        (
+            corrimiento,
+            candidato,
+            puntaje
+        )
+    )
+
+
+# Resultado con mayor puntaje
+mejor = max(
+    resultados,
+    key=lambda elemento: elemento[2]
+)
+
+
+print("\n======================================")
+print(" 26 POSIBLES CORRIMIENTOS")
+print("======================================\n")
+
+
+for corrimiento, candidato, puntaje in resultados:
+
+    if corrimiento == mejor[0]:
+
+        print(
+            VERDE
+            + f"{corrimiento:2d}: {candidato}"
+            + RESET
+        )
+
+    else:
+
+        print(
+            f"{corrimiento:2d}: {candidato}"
+        )
+
+
+print("\n======================================")
+print(" OPCIÓN MÁS PROBABLE")
+print("======================================")
+
+print(
+    VERDE
+    + f"\nCorrimiento {mejor[0]}:"
+    + f"\n{mejor[1]}"
+    + RESET
+)

@@ -1,0 +1,83 @@
+import sys
+
+
+def cifrar_cesar(texto, corrimiento):
+    resultado = ""
+
+    for caracter in texto:
+
+        # Si es una letra minúscula
+        if 'a' <= caracter <= 'z':
+
+            nueva_posicion = (
+                ord(caracter)
+                - ord('a')
+                + corrimiento
+            ) % 26
+
+            resultado += chr(
+                ord('a') + nueva_posicion
+            )
+
+        # Si es una letra mayúscula
+        elif 'A' <= caracter <= 'Z':
+
+            nueva_posicion = (
+                ord(caracter)
+                - ord('A')
+                + corrimiento
+            ) % 26
+
+            resultado += chr(
+                ord('A') + nueva_posicion
+            )
+
+        # Espacios, números y signos se mantienen
+        else:
+            resultado += caracter
+
+    return resultado
+
+
+# El programa debe recibir:
+# 1. Texto
+# 2. Corrimiento
+if len(sys.argv) != 3:
+
+    print('Uso:')
+    print('py cesar.py "texto" corrimiento')
+
+    sys.exit(1)
+
+
+texto = sys.argv[1]
+
+
+try:
+    corrimiento = int(sys.argv[2])
+
+except ValueError:
+
+    print("El corrimiento debe ser un número entero.")
+
+    sys.exit(1)
+
+
+texto_cifrado = cifrar_cesar(
+    texto,
+    corrimiento
+)
+
+
+print("\n==============================")
+print(" CIFRADO CESAR")
+print("==============================")
+
+print("\nTexto original:")
+print(texto)
+
+print("\nCorrimiento:")
+print(corrimiento)
+
+print("\nTexto cifrado:")
+print(texto_cifrado)

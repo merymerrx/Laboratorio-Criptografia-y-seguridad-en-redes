@@ -1,0 +1,230 @@
+import sys
+import time
+
+from scapy.all import (
+    rdpcap,
+    wrpcap,
+    IP,
+    ICMP,
+    Raw,
+    send
+)
+
+
+# -------------------------------------------------
+# DESTINO FIJO:
+# solo el propio computador.
+# -------------------------------------------------
+
+DESTINO = "127.0.0.1"
+
+
+# -------------------------------------------------
+# COMPROBAR PARÁMETROS
+# -------------------------------------------------
+
+if len(sys.argv) != 3:
+
+    print("Uso:")
+    print(
+        'py generar_icmp.py '
+        '"mensaje cifrado" ping_real.pcapng'
+    )
+
+    sys.exit(1)
+
+
+mensaje = sys.argv[1]
+archivo_ping = sys.argv[2]
+
+
+# Según la pauta, al final se transmite una "b"
+# que utilizaremos como marcador.
+mensaje_transmitido = mensaje + "b"
+
+
+# -------------------------------------------------
+# LEER EL PING REAL
+# -------------------------------------------------
+
+try:
+
+    paquetes = rdpcap(
+        archivo_ping
+    )
+
+except FileNotFoundError:
+
+    print(
+        f"No se encontró el archivo: {archivo_ping}"
+    )
+
+    sys.exit(1)
+
+
+paquete_base = None
+
+
+# Buscamos un ICMP Echo Request real
+for paquete in paquetes:
+
+    if (
+        paquete.haslayer(IP)
+        and paquete.haslayer(ICMP)
+        and paquete[ICMP].type == 8
+        and paquete.haslayer(Raw)
+    ):
+
+        paquete_base = paquete[IP].copy()
+
+        break
+
+
+if paquete_base is None:
+
+    print(
+        "No se encontró un ICMP Echo Request "
+        "con datos en la captura."
+    )
+
+    sys.exit(1)
+
+
+# Datos originales del ping
+payload_original = bytes(
+    paquete_base[Raw].load
+)
+
+
+if len(payload_original) == 0:
+
+    print(
+        "El ping seleccionado no posee datos."
+    )
+
+    sys.exit(1)
+
+
+print("\n======================================")
+print(" ACTIVIDAD 2 - ICMP LOCAL")
+print("======================================")
+
+print("\nDestino:")
+print(DESTINO)
+
+print("\nMensaje cifrado:")
+print(mensaje)
+
+print("\nMensaje con marcador final:")
+print(mensaje_transmitido)
+
+print(
+    "\nTamaño del Data original:",
+    len(payload_original),
+    "bytes"
+)
+
+print()
+
+
+# -------------------------------------------------
+# GENERAR UN PAQUETE POR CARÁCTER
+# -------------------------------------------------
+
+paquetes_generados = []
+
+
+for indice, caracter in enumerate(
+    mensaje_transmitido
+):
+
+    # Copiamos el ping real
+    paquete = paquete_base.copy()
+
+    # Obligatoriamente permanece en localhost
+    paquete[IP].src = DESTINO
+    paquete[IP].dst = DESTINO
+
+    # Copiamos el Data real
+    nuevos_datos = bytearray(
+        payload_original
+    )
+
+    # Un carácter del mensaje por paquete.
+    # Modificamos el primer byte.
+    nuevos_datos[0] = ord(
+        caracter
+    )
+
+    paquete[Raw].load = bytes(
+        nuevos_datos
+    )
+
+    # Incrementar número de secuencia
+    paquete[ICMP].seq = (
+        indice + 1
+    )
+
+    # Eliminar checksums antiguos.
+    # Scapy los vuelve a calcular.
+    if hasattr(
+        paquete[IP],
+        "chksum"
+    ):
+
+        del paquete[IP].chksum
+
+
+    if hasattr(
+        paquete[ICMP],
+        "chksum"
+    ):
+
+        del paquete[ICMP].chksum
+
+
+    paquetes_generados.append(
+        paquete
+    )
+
+
+    print(
+        f"Paquete {indice + 1:02d}"
+        f" | carácter = {repr(caracter)}"
+        f" | seq = {indice + 1}"
+    )
+
+
+    # Envío solamente al propio PC
+    send(
+        paquete,
+        verbose=False
+    )
+
+
+    # Separación para poder distinguirlos
+    time.sleep(0.5)
+
+
+# -------------------------------------------------
+# GUARDAR LA DEMOSTRACIÓN
+# -------------------------------------------------
+
+wrpcap(
+    "stealth_demo.pcap",
+    paquetes_generados
+)
+
+
+print("\n======================================")
+print(" TRANSMISIÓN FINALIZADA")
+print("======================================")
+
+print(
+    "\nCantidad de paquetes:",
+    len(paquetes_generados)
+)
+
+print(
+    "Archivo creado: stealth_demo.pcap"
+)
