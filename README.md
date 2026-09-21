@@ -3,7 +3,7 @@
 Bienvenidx al repositorio  para las prácticas de la asignatura **Criptografía y Seguridad en Redes**.
 
 * **Autora:** María de los Ángeles Martínez M.
-* **Estado del repositorio:** Público 🌐
+* **Estado del repositorio:** Público 
 
 
 ##  Descripción del Repositorio
@@ -14,7 +14,7 @@ Cada laboratorio está organizado dentro de su propia carpeta correspondiente. E
 
 ---
 
-## 📁 Estructura del Repositorio
+##  Estructura del Repositorio
 
 ```text
 .
@@ -25,6 +25,9 @@ Cada laboratorio está organizado dentro de su propia carpeta correspondiente. E
 │   ├── parte dos.pcapng
 │   ├── read
 │   └── stealth_demo.pcap
-├── Laboratorio 2/       # (Próximamente)
+├── Laboratorio 2/
+│   ├── Lab_2__Cripto (1).zip
+│   ├── pass.txt
+│   └── tarea_2_cripto.pcapng
 ├── Laboratorio 3/       # (Próximamente)
 └── Laboratorio 4/       # (Próximamente)
