@@ -1,0 +1,116 @@
+\documentclass[letter,12pt]{article}
+\usepackage[paperheight=27.94cm,paperwidth=21.59cm,bindingoffset=0in,left=3cm,right=2.0cm, top=3.5cm,bottom=2.5cm, headheight=200pt, headsep=1.0\baselineskip]{geometry}
+\usepackage{graphicx,lastpage}
+\usepackage{upgreek}
+\usepackage{censor}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{pdfpages}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{rotating}
+\usepackage{multirow}
+\usepackage[utf8]{inputenc}
+\usepackage{float}
+\usepackage{hyperref}
+
+\renewcommand{\tablename}{Tabla}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+
+%
+\begin{document}
+%
+   \title{\Huge{Informe Laboratorio 4}}
+
+   \author{\textbf{Sección 1} \\  \\Alumno 1 \\ e-mail: alumno.contacto@mail.udp.cl}
+          
+   \date{Agosto de 2026}
+
+   \maketitle
+   
+   \tableofcontents
+ 
+  \newpage
+  
+
+\section{Descripción}
+Usted trabaja en una empresa especializada en la transferencia segura de información, archivos y contenido digital. Antes de incorporarse al desarrollo y operación de los sistemas reales de la organización, se le solicita realizar una demostración técnica que permita evaluar sus conocimientos en redes, protocolos de comunicación y criptografía.
+
+Para ello, deberá implementar y configurar un servidor SSH, definiendo los mecanismos criptográficos utilizados para proteger la comunicación. Posteriormente, deberá establecer una conexión con el servidor y capturar el tráfico de red utilizando Wireshark.
+
+A partir del análisis de los paquetes capturados, deberá identificar qué información puede ser observada por un tercero que tuviera acceso al tráfico de red y determinar qué elementos de la comunicación están protegidos mediante cifrado y cuáles pueden ser visibles, con el objetivo de evaluar el nivel de seguridad proporcionado por el protocolo SSH.
+
+Finalmente, se le proporcionará una captura de tráfico de red obtenida mediante Wireshark. En ella se encuentran diversos mensajes correspondientes a transacciones que han sido cifrados mediante RSA.
+
+El objetivo de esta actividad es analizar la captura de tráfico, identificar los paquetes que contienen la información cifrada y desarrollar un programa en Python que permita recuperar el contenido original.
+
+\section{Actividades}
+\subsection{Configuración y análisis de SSH}
+\subsubsection{Implementación y configuración del servidor SSH}
+
+    Generar un contenedor Docker que permita ejecutar un servidor SSH accesible desde el equipo cliente (su computador). Posteriormente, configure el servidor mediante un archivo \texttt{sshd\_config}, en el cual deberá especificar los algoritmos criptográficos utilizados durante la comunicación SSH: \texttt{curve25519-sha256}, \texttt{aes256-ctr}, \texttt{hmac-sha2-256} y \texttt{ssh-ed25519}. Por último, documente la función que cumple cada algoritmo dentro del proceso de establecimiento y comunicación de una conexión SSH.
+
+
+\subsubsection{Análisis de paquetes SSH en Wireshark}
+
+    Una vez completada la configuración del servidor SSH, deberá analizar el tráfico de red generado durante el establecimiento de la conexión utilizando Wireshark.
+
+    Para ello, antes de realizar la conexión SSH, inicie la captura de tráfico en la interfaz de red correspondiente. Posteriormente, establezca una conexión con el servidor utilizando su máquina como cliente y analice los paquetes intercambiados durante el proceso de conexión.
+
+    A partir del análisis realizado, responda la siguiente pregunta:
+
+    ¿Qué información es posible identificar a partir de los paquetes capturados? Mencione y explique al menos tres elementos que puedan observarse en el tráfico de la conexión SSH.
+
+  %  \item Adicionalmente, se indica que es posible configurar el servidor SSH para utilizar RSA como algoritmo de clave de host. Para comprobar si se han generado las claves RSA, puede ejecutar el siguiente comando dentro del servidor:
+    
+  %  "ls -l /etc/ssh/ssh\_host\_rsa\_key*"
+    
+   % Si existen dos archivos, uno correspondiente a la clave privada (`ssh\_host\_rsa\_key`) y otro a la clave pública (`ssh\_host\_rsa\_key.pub`), significa que ambas claves están presentes. Tenga presente que su existencia no garantiza que el servidor esté configurado para utilizarlas. 
+
+
+\subsection{Análisis de captura de tráfico antigua}
+
+\subsubsection{Análisis de los mecanismos criptográficos}
+Se le solicita analizar una captura de tráfico de red antigua, en formato .pcap, que contiene transacciones financieras cifradas mediante una combinación de criptografía asimétrica y simétrica. Para realizar la actividad, se le proporcionarán la captura y las claves pública y privada RSA correspondientes. Deberá identificar los paquetes relevantes y analizar el mecanismo de cifrado utilizado, considerando que RSA se emplea para cifrar un PIN de cuatro dígitos mediante OAEP con SHA-256, mientras que AES-GCM se utiliza para proteger el contenido de las transacciones financieras.
+
+\subsubsection{Recuperación del PIN y derivación de la clave AES}
+El primer paquete relevante de la captura contiene la etiqueta RSA\_PIN, seguida de una salt de 16 bytes y del PIN cifrado mediante RSA. Deberá identificar y extraer estos campos, utilizar la clave privada RSA proporcionada para recuperar el PIN y, posteriormente, derivar la clave AES de 256 bits mediante Scrypt. Para ello, deberá utilizar el PIN recuperado, la salt extraída de la captura y los siguientes parámetros: (n=2**{14}), (r=8) y (p=1). Explique la función de la salt y por qué es necesario utilizar los mismos parámetros para obtener la clave AES original.
+
+\subsubsection{Descifrado de las transacciones y análisis final}
+Una vez obtenida la clave AES, deberá identificar todos los paquetes que contienen transacciones cifradas mediante AES-GCM. Para cada paquete, deberá extraer el nonce de 12 bytes y utilizarlo junto con la clave derivada y el texto cifrado para recuperar los mensajes originales, verificando su autenticidad. Implemente el procedimiento completo en un script de Python y presente las transacciones recuperadas en su formato original, incluyendo el identificador, el remitente, el destinatario y el monto. Documente el procedimiento realizado e incluya evidencias de los resultados obtenidos.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{actividades/Screenshot 2026-10-15 164449.png}
+    \caption{Ejemplo del resultado}
+    \label{fig:placeholder}
+\end{figure}
+
+Finalmente, responda la siguiente pregunta, justificando su respuesta: ¿Sería posible descifrar los mensajes capturados utilizando las claves pública y privada RSA en cifrados PQC (Criptografía post-cuántica)?
+
+\section{Desarrollo de actividades}
+
+\subsection{Actividad 1}
+    \subsubsection{Dockerfile}
+    \subsubsection{Configuración del servidor}
+    \subsubsection{Explicación de los algoritmos utilizados}
+    \subsubsection{Conexión cliente-servidor}
+    \subsubsection{Análisis de tráfico}
+
+\subsection{Actividad 2}
+    \subsubsection{Identificación del paquete RSA\_PIN}
+    \subsubsection{Identificación de los paquetes AESGCM}
+    \subsubsection{Recuperación del PIN y derivación de la clave AES}
+    \subsubsection{Descifrar los mensajes}
+
+\section*{Conclusiones y comentarios}
+
+\section{Bibliografia}
+\begin{itemize}
+    \item \href{https://drive.google.com/drive/folders/1rXMp5y9WeBR36iytc4RBaqXKWf3ea-WU} {Captura y Claves}
+\end{itemize}
+
+\end{document}
