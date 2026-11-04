@@ -1,0 +1,15 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y openssh-server && rm -rf /var/lib/apt/lists/*
+RUN useradd -m -s /bin/bash estudiante && passwd -d estudiante
+RUN mkdir -p /home/estudiante/.ssh && chown estudiante:estudiante /home/estudiante/.ssh && chmod 700 /home/estudiante/.ssh
+
+COPY --chown=estudiante:estudiante --chmod=600 clave_ssh.pub /home/estudiante/.ssh/authorized_keys
+COPY servidor.conf /etc/ssh/sshd_config
+
+RUN rm -f /etc/ssh/ssh_host_* && ssh-keygen -q -t ed25519 -N '' -f /etc/ssh/ssh_host_ed25519_key
+RUN mkdir -p /run/sshd && /usr/sbin/sshd -t
+
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D", "-e"]
