@@ -5,11 +5,9 @@ from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 import json
 
-# ==========================================
-# ¡REVISA QUE ESTOS NOMBRES SEAN LOS TUYOS!
 PCAP      = "transacciones_cifradas.pcap"
 CLAVE_RSA = "clave_privada.pem"
-# ==========================================
+
 
 print("--- 1. Leyendo el pcap ---")
 pkts = rdpcap(PCAP)
@@ -20,8 +18,7 @@ rsa_pkt = next((pl for pl in payloads if pl.startswith(b"RSA_PIN")), None)
 if rsa_pkt is None:
     raise SystemExit("No se encontró RSA_PIN")
 
-# OJO: Ajusta el OFFSET si viste un separador (como '|') después de RSA_PIN
-OFFSET_SALT = 8 
+OFFSET_SALT = 9
 salt       = rsa_pkt[OFFSET_SALT:OFFSET_SALT+16]
 ciphertext = rsa_pkt[OFFSET_SALT+16:]
 print(f"Salt (hex): {salt.hex()}")
